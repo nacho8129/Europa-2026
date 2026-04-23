@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Europa 2026">
+<meta name="theme-color" content="#e8a838">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Europa 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lora:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0d0f14;
+  --surface: #13161d;
+  --surface2: #1a1e28;
+  --border: rgba(255,255,255,0.07);
+  --text: #e8e2d4;
+  --muted: #6b7280;
+  --accent: #e8a838;
+  --accent2: #5b8dee;
+  --green: #34d399;
+  --yellow: #fbbf24;
+  --red: #f87171;
+  --glow: rgba(232,168,56,0.15);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+body::after {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:9999;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 200;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  padding-top: calc(0.75rem + env(safe-area-inset-top));
+  background: rgba(13,15,20,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 0.15rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.nav-tabs::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-tab:hover { color: var(--text); border-color: var(--border); }
+.nav-tab.active { color: var(--accent); border-color: var(--accent); background: var(--glow); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 6rem 2rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 80% 50% at 50% 60%, rgba(91,141,238,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 20% 80%, rgba(232,168,56,0.06) 0%, transparent 60%);
+}
+
+.hero-route {
+  font-size: 0.6rem;
+  letter-spacing: 0.4em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  animation: fadeDown 0.8s ease both;
+}
+
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(5rem, 18vw, 13rem);
+  line-height: 0.88;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  animation: fadeDown 0.8s 0.1s ease both;
+}
+
+.hero-title span { color: var(--accent); }
+
+.hero-subtitle {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: clamp(0.9rem, 2.5vw, 1.4rem);
+  color: var(--muted);
+  margin-top: 1.5rem;
+  animation: fadeDown 0.8s 0.2s ease both;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 2rem;
+  margin-top: 3rem;
+  animation: fadeDown 0.8s 0.3s ease both;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.hero-stat { text-align: center; }
+
+.hero-stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.2rem;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.hero-stat-label {
+  font-size: 0.52rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+  text-transform: uppercase;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(6px); }
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── SECTIONS ── */
+section {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 4rem 1.25rem 5rem;
+}
+
+.section-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.section-heading {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  letter-spacing: 0.05em;
+  line-height: 1;
+  margin-bottom: 2rem;
+}
+
+/* ── MAP SVG ── */
+.map-container {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+#europe-map { width: 100%; height: auto; display: block; }
+
+.map-pin { cursor: pointer; }
+.pulse-ring { animation: pulse-ring 2s ease-out infinite; }
+@keyframes pulse-ring {
+  0% { opacity: 0.8; r: 6; }
+  100% { opacity: 0; r: 18; }
+}
+
+/* ── TIMELINE ── */
+.timeline { position: relative; padding-left: 2rem; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--accent) 10%, var(--accent) 90%, transparent);
+  opacity: 0.3;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 0;
+  opacity: 0;
+  transform: translateX(-15px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.timeline-item.visible { opacity: 1; transform: translateX(0); }
+
+.timeline-dot {
+  position: absolute;
+  left: -2.35rem; top: 1.5rem;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 2px solid var(--muted);
+  transition: all 0.3s;
+}
+.timeline-item.active .timeline-dot,
+.timeline-item:hover .timeline-dot { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 15px var(--glow); }
+
+.timeline-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 1px;
+  transition: all 0.25s;
+  overflow: hidden;
+}
+.timeline-card:hover { border-color: rgba(232,168,56,0.3); box-shadow: 0 4px 30px rgba(0,0,0,0.4); transform: translateX(4px); }
+.timeline-card.expanded { border-color: rgba(232,168,56,0.4); }
+
+.timeline-card-header {
+  display: grid;
+  grid-template-columns: 60px auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.timeline-dates { font-size: 0.6rem; color: var(--muted); line-height: 1.5; }
+.timeline-flag { font-size: 1.4rem; }
+.timeline-city { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 0.05em; line-height: 1; }
+.timeline-meta { text-align: right; }
+.timeline-nights { font-size: 0.55rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+.timeline-cost { font-family: 'Lora', serif; font-style: italic; font-size: 0.95rem; color: var(--accent); }
+
+.timeline-detail { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1); }
+.timeline-detail.open { max-height: 600px; }
+
+.detail-inner {
+  padding: 1rem 1.25rem 1.25rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.detail-block { background: var(--surface2); border-radius: 4px; padding: 0.85rem; }
+.detail-label { font-size: 0.52rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+.detail-value { font-size: 0.72rem; color: var(--text); line-height: 1.6; }
+.detail-value a { color: var(--accent2); text-decoration: none; }
+
+.transport-strip {
+  background: var(--surface2);
+  border-top: 1px solid var(--border);
+  padding: 0.65rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--muted);
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.transport-left { display: flex; align-items: center; gap: 0.5rem; }
+.transport-right { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+
+.badge { font-size: 0.52rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 2px; white-space: nowrap; }
+.badge-ok { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
+.badge-pending { background: rgba(251,191,36,0.1); color: var(--yellow); border: 1px solid rgba(251,191,36,0.2); }
+
+/* ── BUDGET ── */
+.budget-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.budget-card { background: var(--surface); padding: 1.1rem; transition: background 0.2s; }
+.budget-card:hover { background: var(--surface2); }
+.budget-route { font-size: 0.58rem; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.35rem; }
+.budget-amount { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--text); line-height: 1; }
+.budget-amount small { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; color: var(--muted); }
+.budget-op { font-size: 0.58rem; color: var(--muted); margin-top: 0.25rem; }
+
+.budget-total-bar {
+  background: var(--surface);
+  border: 1px solid rgba(232,168,56,0.3);
+  border-radius: 6px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.total-label { font-size: 0.58rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); }
+.total-amount { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: var(--accent); line-height: 1; }
+.total-sub { font-size: 0.62rem; color: var(--muted); }
+
+.pending-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.pending-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.6rem 0.75rem;
+  background: var(--surface2);
+  border-radius: 4px;
+  border-left: 2px solid var(--yellow);
+  font-size: 0.68rem;
+}
+.pending-item-route { color: var(--text); }
+.pending-item-price { color: var(--yellow); flex-shrink: 0; margin-left: 0.5rem; }
+
+/* ── TOOLS ── */
+.tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 600px) { .tools-grid { grid-template-columns: 1fr; } }
+
+.tool-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: all 0.25s;
+}
+.tool-card:hover { border-color: rgba(232,168,56,0.3); }
+.tool-card.full-width { grid-column: 1 / -1; }
+
+.tool-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 1rem; }
+
+/* Currency */
+.calc-input-row { display: flex; gap: 0.4rem; margin-bottom: 0.65rem; align-items: center; }
+.calc-input {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 4px;
+  padding: 0.55rem 0.65rem; color: var(--text); font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem; width: 100%; transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.calc-input:focus { outline: none; border-color: var(--accent); }
+
+.calc-select {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 4px;
+  padding: 0.55rem 0.4rem; color: var(--text); font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem; cursor: pointer; -webkit-appearance: none;
+}
+
+.calc-result {
+  background: var(--surface2); border-radius: 4px; padding: 0.7rem;
+  font-size: 0.75rem; color: var(--muted); min-height: 2.5rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.calc-result span { color: var(--green); font-size: 1rem; }
+
+/* Weather */
+.weather-display {
+  background: var(--surface2); border-radius: 4px; padding: 1rem;
+  display: flex; align-items: center; justify-content: space-between; min-height: 80px;
+}
+.weather-temp { font-family: 'Bebas Neue', sans-serif; font-size: 2.3rem; color: var(--accent); line-height: 1; }
+.weather-desc { font-size: 0.65rem; color: var(--muted); margin-top: 0.2rem; }
+.weather-icon { font-size: 2.2rem; }
+.weather-details { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; margin-top: 0.65rem; }
+.weather-detail { background: var(--surface2); padding: 0.4rem 0.65rem; border-radius: 3px; font-size: 0.62rem; color: var(--muted); }
+.weather-detail span { color: var(--text); }
+
+/* Checklist */
+.checklist-items { display: flex; flex-direction: column; gap: 0.35rem; max-height: 220px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.checklist-items::-webkit-scrollbar { width: 3px; }
+.checklist-items::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 2px; }
+.check-item {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.4rem; border-radius: 3px; cursor: pointer; font-size: 0.7rem;
+  -webkit-tap-highlight-color: transparent;
+}
+.check-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+.check-item.done { color: var(--muted); text-decoration: line-through; }
+
+/* ══════════════════════════════════════
+   WAZE MAP STYLES
+══════════════════════════════════════ */
+.waze-container { display: flex; flex-direction: column; gap: 1rem; }
+
+.waze-city-row {
+  display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;
+}
+
+.waze-city-btn {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.waze-city-btn:hover, .waze-city-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--glow);
+}
+
+.waze-cats {
+  display: flex; gap: 0.4rem; flex-wrap: wrap;
+}
+
+.waze-cat-btn {
+  display: flex; align-items: center; gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.waze-cat-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(91,141,238,0.1); }
+.waze-cat-btn .cat-icon { font-size: 0.9rem; }
+
+#waze-map {
+  width: 100%;
+  height: 420px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.waze-status {
+  font-size: 0.65rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 0.5rem;
+}
+
+/* Custom leaflet dark theme */
+.leaflet-container { background: #1a2035 !important; }
+.leaflet-popup-content-wrapper {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-size: 0.72rem !important;
+}
+.leaflet-popup-tip { background: var(--surface) !important; }
+.leaflet-popup-close-button { color: var(--muted) !important; }
+.leaflet-control-zoom a {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+.leaflet-control-attribution { 
+  background: rgba(13,15,20,0.7) !important; 
+  color: var(--muted) !important;
+  font-size: 0.5rem !important;
+}
+
+/* Hotel list */
+.hotel-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.hotel-card {
+  background: var(--surface); padding: 1rem 1.25rem;
+  display: grid; grid-template-columns: auto 1fr auto;
+  gap: 0.85rem; align-items: center; transition: background 0.2s; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.hotel-card:hover { background: var(--surface2); }
+.hotel-flag { font-size: 1.3rem; }
+.hotel-city { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em; line-height: 1; }
+.hotel-name { font-size: 0.65rem; color: var(--muted); margin-top: 0.15rem; }
+.hotel-address { font-size: 0.6rem; color: rgba(107,114,128,0.7); margin-top: 0.1rem; }
+.hotel-right { text-align: right; }
+.hotel-checkin { font-size: 0.6rem; color: var(--muted); }
+.hotel-price { font-family: 'Lora', serif; font-style: italic; color: var(--accent); font-size: 0.9rem; }
+.map-btn {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent2); text-decoration: none;
+  border: 1px solid rgba(91,141,238,0.3); padding: 0.2rem 0.5rem;
+  border-radius: 3px; margin-top: 0.25rem; transition: all 0.2s;
+}
+.map-btn:hover { background: rgba(91,141,238,0.1); border-color: var(--accent2); }
+
+/* Tab panels */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .timeline-card-header { grid-template-columns: auto 1fr; }
+  .timeline-meta { display: none; }
+  .detail-inner { grid-template-columns: 1fr; }
+  .hotel-card { grid-template-columns: auto 1fr; }
+  .hotel-right { display: none; }
+}
+
+footer {
+  text-align: center; padding: 2.5rem 2rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.58rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted);
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Europa 2026 ✈</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('timeline',this)">Itinerario</button>
+    <button class="nav-tab" onclick="showTab('alojamiento',this)">Alojamiento</button>
+    <button class="nav-tab" onclick="showTab('presupuesto',this)">Presupuesto</button>
+    <button class="nav-tab" onclick="showTab('herramientas',this)">Herramientas</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <p class="hero-route">Montevideo → 9 Ciudades → Montevideo</p>
+  <h1 class="hero-title">EUROPA<br><span>2026</span></h1>
+  <p class="hero-subtitle">16 de mayo — 9 de junio · Un viaje épico</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="hero-stat-num">24</div><div class="hero-stat-label">Días</div></div>
+    <div class="hero-stat"><div class="hero-stat-num">9</div><div class="hero-stat-label">Ciudades</div></div>
+    <div class="hero-stat"><div class="hero-stat-num">10</div><div class="hero-stat-label">Tramos</div></div>
+    <div class="hero-stat"><div class="hero-stat-num">$1340</div><div class="hero-stat-label">Transporte pp</div></div>
+  </div>
+  <div class="scroll-hint">↓ explorar</div>
+</div>
+
+<!-- ════ ITINERARIO ════ -->
+<div id="tab-timeline" class="tab-panel active">
+<section>
+  <p class="section-label">01 — Ruta</p>
+  <h2 class="section-heading">El Itinerario</h2>
+
+  <div class="map-container" style="margin-bottom:2rem;">
+    <svg id="europe-map" viewBox="0 0 800 600" style="background:#0d1520">
+      <defs>
+        <filter id="glow-filter">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <rect width="800" height="600" fill="#0d1520"/>
+      <path d="M 150 50 L 200 30 L 280 20 L 350 40 L 420 30 L 500 50 L 560 80 L 600 120 L 620 160 L 610 200 L 580 230 L 550 260 L 520 300 L 500 340 L 480 360 L 460 380 L 440 400 L 420 420 L 390 440 L 360 450 L 330 460 L 310 480 L 290 500 L 270 520 L 250 530 L 230 520 L 210 510 L 190 490 L 175 470 L 165 450 L 155 420 L 145 390 L 135 360 L 125 330 L 115 300 L 110 270 L 115 240 L 120 210 L 130 180 L 140 150 L 145 120 L 148 90 Z" fill="#1a2035" stroke="#2a3a55" stroke-width="1.5"/>
+      <path d="M 155 250 L 185 240 L 220 235 L 250 240 L 270 260 L 275 290 L 270 320 L 255 345 L 235 360 L 210 365 L 185 355 L 168 335 L 158 310 L 152 285 Z" fill="#1e2840" stroke="#2a3a55" stroke-width="1.5"/>
+      <path d="M 370 280 L 395 275 L 415 285 L 425 310 L 430 340 L 440 370 L 450 400 L 445 420 L 430 430 L 415 420 L 400 400 L 390 375 L 375 350 L 365 325 L 358 300 Z" fill="#1e2840" stroke="#2a3a55" stroke-width="1.5"/>
+      <path d="M 195 90 L 215 80 L 230 90 L 225 120 L 210 135 L 195 125 L 190 105 Z" fill="#1a2035" stroke="#2a3a55" stroke-width="1"/>
+      <polyline points="400,520 283,258 220,300 210,270 185,260 290,155 385,295 400,330 390,375 430,395 350,215" fill="none" stroke="#e8a838" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.5"/>
+      <g class="map-pin" onclick="jumpToCity('madrid')"><circle cx="220" cy="300" r="20" fill="transparent"/><circle cx="220" cy="300" r="5" fill="#e8a838" opacity="0.9"/><text x="230" y="296" font-family="'IBM Plex Mono'" font-size="10" fill="#e8e2d4" opacity="0.8">Madrid</text></g>
+      <g class="map-pin" onclick="jumpToCity('lisboa')"><circle cx="185" cy="310" r="20" fill="transparent"/><circle cx="185" cy="310" r="5" fill="#5b8dee" opacity="0.9"/><text x="145" y="324" font-family="'IBM Plex Mono'" font-size="10" fill="#e8e2d4" opacity="0.8">Lisboa</text></g>
+      <g class="map-pin" onclick="jumpToCity('oporto')"><circle cx="185" cy="275" r="20" fill="transparent"/><circle cx="185" cy="275" r="5" fill="#5b8dee" opacity="0.9"/><text x="148" y="265" font-family="'IBM Plex Mono'" font-size="10" fill="#e8e2d4" opacity="0.8">Oporto</text></g>
+      <g class="map-pin" onclick="jumpToCity('paris')"><circle cx="283" cy="180" r="20" fill="transparent"/><circle cx="283" cy="180" r="5" fill="#e8a838" opacity="0.9"/><text x="293" y="177" font-family="'IBM Plex Mono'" font-size="10" fill="#e8e2d4" opacity="0.8">París</text></g>
+      <g class="map-pin" onclick="jumpToCity('roma')"><circle cx="385" cy="320" r="20" fill="transparent"/><circle cx="385" cy="320" r="5" fill="#e8a838" opacity="0.9"/><text x="395" y="317" font-family="'IBM Plex Mono'" font-size="10" fill="#e8e2d4" opacity="0.8">Roma</text></g>
+      <g class="map-pin" onclick="jumpToCity('florencia')"><circle cx="370" cy="292" r="20" fill="transparent"/><circle cx="370" cy="292" r="5" fill="#34d399" opacity="0.9"/><text x="378" y="289" font-family="'IBM Plex Mono'" font-size="10" fill="#e8e2d4" opacity="0.8">Florencia</text></g>
+      <g class="map-pin" onclick="jumpToCity('venecia')"><circle cx="395" cy="268" r="20" fill="transparent"/><circle cx="395" cy="268" r="5" fill="#34d399" opacity="0.9"/><text x="405" y="265" font-family="'IBM Plex Mono'" font-size="10" fill="#e8e2d4" opacity="0.8">Venecia</text></g>
+      <g class="map-pin" onclick="jumpToCity('barcelona')"><circle cx="265" cy="270" r="20" fill="transparent"/><circle cx="265" cy="270" r="5" fill="#e8a838" opacity="0.9"/><text x="270" y="260" font-family="'IBM Plex Mono'" font-size="10" fill="#e8e2d4" opacity="0.8">Barcelona</text></g>
+      <g transform="translate(20,540)">
+        <circle cx="8" cy="8" r="4" fill="#e8a838"/><text x="16" y="12" font-family="'IBM Plex Mono'" font-size="9" fill="#6b7280">España/Francia</text>
+        <circle cx="130" cy="8" r="4" fill="#5b8dee"/><text x="138" y="12" font-family="'IBM Plex Mono'" font-size="9" fill="#6b7280">Portugal</text>
+        <circle cx="210" cy="8" r="4" fill="#34d399"/><text x="218" y="12" font-family="'IBM Plex Mono'" font-size="9" fill="#6b7280">Italia</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="timeline" id="timeline-container">
+    <!-- MADRID -->
+    <div class="timeline-item" id="tl-madrid">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="timeline-card-header" onclick="toggleDetail('madrid')">
+          <div><div class="timeline-dates">17 – 18 may</div></div>
+          <span class="timeline-flag">🇪🇸</span>
+          <div class="timeline-city">MADRID</div>
+          <div class="timeline-meta"><div class="timeline-nights">2 noches</div><div class="timeline-cost">€92</div></div>
+        </div>
+        <div class="timeline-detail" id="detail-madrid">
+          <div class="detail-inner">
+            <div class="detail-block"><div class="detail-label">🏨 Alojamiento</div><div class="detail-value">JC Room Santa Ana<br>De la Cruz 8, Centro<br><small style="color:var(--muted)">Check-in: 14:00 · Check-out: 12:00</small></div></div>
+            <div class="detail-block"><div class="detail-label">📍 Ubicación</div><div class="detail-value"><a href="https://maps.google.com/?q=De+la+Cruz+8+Madrid" target="_blank">Ver en Google Maps ↗</a></div></div>
+          </div>
+        </div>
+        <div class="transport-strip">
+          <div class="transport-left">✈️ MAD → LIS · Air Europa · 18:55</div>
+          <div class="transport-right"><span>$50 pp</span><span class="badge badge-ok">Comprado</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- LISBOA -->
+    <div class="timeline-item" id="tl-lisboa">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="timeline-card-header" onclick="toggleDetail('lisboa')">
+          <div><div class="timeline-dates">18 – 20 may</div></div>
+          <span class="timeline-flag">🇵🇹</span>
+          <div class="timeline-city">LISBOA</div>
+          <div class="timeline-meta"><div class="timeline-nights">2 noches</div><div class="timeline-cost">€166</div></div>
+        </div>
+        <div class="timeline-detail" id="detail-lisboa">
+          <div class="detail-inner">
+            <div class="detail-block"><div class="detail-label">🏨 Alojamiento</div><div class="detail-value">Pensão Nova Goa<br>Rua Arco Marquês do Alegrete 13<br><small style="color:var(--muted)">Check-in: 14:00</small></div></div>
+            <div class="detail-block"><div class="detail-label">📍 Ubicación</div><div class="detail-value"><a href="https://maps.google.com/?q=Rua+Arco+Marques+Alegrete+13+Lisboa" target="_blank">Ver en Google Maps ↗</a></div></div>
+          </div>
+        </div>
+        <div class="transport-strip">
+          <div class="transport-left">🚂 LIS → OPO · Tren/Bus · 20:09</div>
+          <div class="transport-right"><span>$30 pp</span><span class="badge badge-pending">⚠ Pendiente</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- OPORTO -->
+    <div class="timeline-item" id="tl-oporto">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="timeline-card-header" onclick="toggleDetail('oporto')">
+          <div><div class="timeline-dates">20 – 23 may</div></div>
+          <span class="timeline-flag">🇵🇹</span>
+          <div class="timeline-city">OPORTO</div>
+          <div class="timeline-meta"><div class="timeline-nights">3 noches</div><div class="timeline-cost">€263</div></div>
+        </div>
+        <div class="timeline-detail" id="detail-oporto">
+          <div class="detail-inner">
+            <div class="detail-block"><div class="detail-label">🏨 Alojamiento</div><div class="detail-value">Travel & Live Aliados Apt<br>25 Rua de Sampaio Bruno<br><small style="color:var(--muted)">Check-in: 23:30 ⚠️</small></div></div>
+            <div class="detail-block"><div class="detail-label">💳 Pago</div><div class="detail-value">Débita 10/05<br>Cancelación: hasta 13/05</div></div>
+          </div>
+        </div>
+        <div class="transport-strip">
+          <div class="transport-left">✈️ OPO → CDG (Orly) · Transavia · 8:30</div>
+          <div class="transport-right"><span>$95 pp</span><span class="badge badge-ok">Comprado</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- PARIS -->
+    <div class="timeline-item" id="tl-paris">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="timeline-card-header" onclick="toggleDetail('paris')">
+          <div><div class="timeline-dates">23 – 25 may</div></div>
+          <span class="timeline-flag">🇫🇷</span>
+          <div class="timeline-city">PARÍS</div>
+          <div class="timeline-meta"><div class="timeline-nights">2 noches</div><div class="timeline-cost">€327</div></div>
+        </div>
+        <div class="timeline-detail" id="detail-paris">
+          <div class="detail-inner">
+            <div class="detail-block"><div class="detail-label">🏨 Alojamiento</div><div class="detail-value">Airbnb Nicolai<br>90 Avenue Victor Hugo, 75016<br><small style="color:var(--muted)">Nos espera frente al Starbucks</small></div></div>
+            <div class="detail-block"><div class="detail-label">💳 Pago</div><div class="detail-value">€65 pagados · resto en mayo<br>Cancelación: 18/05</div></div>
+          </div>
+        </div>
+        <div class="transport-strip">
+          <div class="transport-left">✈️ CDG → FCO · Transavia · 14:55 · Con valija</div>
+          <div class="transport-right"><span>$132 pp</span><span class="badge badge-ok">9E/9F</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- ROMA -->
+    <div class="timeline-item" id="tl-roma">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="timeline-card-header" onclick="toggleDetail('roma')">
+          <div><div class="timeline-dates">25 – 29 may</div></div>
+          <span class="timeline-flag">🇮🇹</span>
+          <div class="timeline-city">ROMA</div>
+          <div class="timeline-meta"><div class="timeline-nights">4 noches</div><div class="timeline-cost">€574</div></div>
+        </div>
+        <div class="timeline-detail" id="detail-roma">
+          <div class="detail-inner">
+            <div class="detail-block"><div class="detail-label">🏨 Alojamiento</div><div class="detail-value">B&B Lidia<br>Via Modena 32<br><small style="color:var(--muted)">Check-in: 15:00</small></div></div>
+            <div class="detail-block"><div class="detail-label">💳 Pago</div><div class="detail-value">€114 pagados<br>Resto el 12/05</div></div>
+          </div>
+        </div>
+        <div class="transport-strip">
+          <div class="transport-left">🚌 ROM → FLR · FlixBus</div>
+          <div class="transport-right"><span>$9 pp</span><span class="badge badge-pending">⚠ Pendiente</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- FLORENCIA -->
+    <div class="timeline-item" id="tl-florencia">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="timeline-card-header" onclick="toggleDetail('florencia')">
+          <div><div class="timeline-dates">29 – 31 may</div></div>
+          <span class="timeline-flag">🇮🇹</span>
+          <div class="timeline-city">FLORENCIA</div>
+          <div class="timeline-meta"><div class="timeline-nights">2 noches</div><div class="timeline-cost">—</div></div>
+        </div>
+        <div class="timeline-detail" id="detail-florencia">
+          <div class="detail-inner">
+            <div class="detail-block"><div class="detail-label">🏨 Alojamiento</div><div class="detail-value">B&B Bretz y Nadja<br>Via della Stufa 5</div></div>
+            <div class="detail-block"><div class="detail-label">📍 Ubicación</div><div class="detail-value"><a href="https://maps.google.com/?q=Via+della+Stufa+5+Firenze" target="_blank">Ver en Google Maps ↗</a></div></div>
+          </div>
+        </div>
+        <div class="transport-strip">
+          <div class="transport-left">🚂 FLR → VCE · Trenitalia Frecce</div>
+          <div class="transport-right"><span>$34 pp</span><span class="badge badge-pending">⚠ Pendiente</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- VENECIA -->
+    <div class="timeline-item" id="tl-venecia">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="timeline-card-header" onclick="toggleDetail('venecia')">
+          <div><div class="timeline-dates">31 may – 2 jun</div></div>
+          <span class="timeline-flag">🇮🇹</span>
+          <div class="timeline-city">VENECIA</div>
+          <div class="timeline-meta"><div class="timeline-nights">2 noches</div><div class="timeline-cost">—</div></div>
+        </div>
+        <div class="timeline-detail" id="detail-venecia">
+          <div class="detail-inner">
+            <div class="detail-block"><div class="detail-label">🏨 Alojamiento</div><div class="detail-value">Mina House Venice<br>Via Cavalieri di Vittorio Veneto 21</div></div>
+            <div class="detail-block"><div class="detail-label">📍 Ubicación</div><div class="detail-value"><a href="https://maps.google.com/?q=Via+Cavalieri+di+Vittorio+Veneto+21+Venezia" target="_blank">Ver en Google Maps ↗</a></div></div>
+          </div>
+        </div>
+        <div class="transport-strip">
+          <div class="transport-left">✈️ VCE → BCN · Vueling · 15:00</div>
+          <div class="transport-right"><span>$90 pp</span><span class="badge badge-ok">9E/9F</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- BARCELONA -->
+    <div class="timeline-item" id="tl-barcelona">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="timeline-card-header" onclick="toggleDetail('barcelona')">
+          <div><div class="timeline-dates">2 – 6 jun</div></div>
+          <span class="timeline-flag">🇪🇸</span>
+          <div class="timeline-city">BARCELONA</div>
+          <div class="timeline-meta"><div class="timeline-nights">4 noches</div><div class="timeline-cost">—</div></div>
+        </div>
+        <div class="timeline-detail" id="detail-barcelona">
+          <div class="detail-inner">
+            <div class="detail-block"><div class="detail-label">🏨 Alojamiento</div><div class="detail-value">Sunotel Junior<br>Avenida Sarrià 9, Eixample</div></div>
+            <div class="detail-block"><div class="detail-label">📍 Ubicación</div><div class="detail-value"><a href="https://maps.google.com/?q=Avenida+Sarria+9+Barcelona" target="_blank">Ver en Google Maps ↗</a></div></div>
+          </div>
+        </div>
+        <div class="transport-strip">
+          <div class="transport-left">🚂 BCN → MAD · Tren</div>
+          <div class="transport-right"><span>— pp</span><span class="badge badge-pending">⚠ Pendiente</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- MADRID CIERRE -->
+    <div class="timeline-item" id="tl-madrid2">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="timeline-card-header" onclick="toggleDetail('madrid2')">
+          <div><div class="timeline-dates">6 – 8 jun</div></div>
+          <span class="timeline-flag">🇪🇸</span>
+          <div class="timeline-city">MADRID <span style="font-size:0.9rem;color:var(--muted)">· cierre</span></div>
+          <div class="timeline-meta"><div class="timeline-nights">2 noches</div><div class="timeline-cost">—</div></div>
+        </div>
+        <div class="timeline-detail" id="detail-madrid2">
+          <div class="detail-inner">
+            <div class="detail-block"><div class="detail-label">🏨 Alojamiento</div><div class="detail-value">La India – Casa Madrid<br><span style="color:var(--yellow)">Dirección pendiente</span></div></div>
+            <div class="detail-block"><div class="detail-label">✈️ Vuelo regreso</div><div class="detail-value">MAD → MVD · 23:55 del 8/6<br>LATAM · Escala São Paulo</div></div>
+          </div>
+        </div>
+        <div class="transport-strip">
+          <div class="transport-left">✈️ MAD → MVD · LATAM · 23:55</div>
+          <div class="transport-right"><span>Incluido</span><span class="badge badge-ok">Comprado</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ════ ALOJAMIENTO ════ -->
+<div id="tab-alojamiento" class="tab-panel">
+<section>
+  <p class="section-label">02 — Hospedaje</p>
+  <h2 class="section-heading">Alojamientos</h2>
+  <div class="hotel-list">
+    <div class="hotel-card" onclick="window.open('https://maps.google.com/?q=De+la+Cruz+8+Madrid','_blank')">
+      <span class="hotel-flag">🇪🇸</span>
+      <div><div class="hotel-city">Madrid</div><div class="hotel-name">JC Room Santa Ana · Booking</div><div class="hotel-address">De la Cruz 8, Centro · 17–18 mayo</div></div>
+      <div class="hotel-right"><div class="hotel-checkin">Check-in 14:00</div><div class="hotel-price">€92</div><a class="map-btn" href="https://maps.google.com/?q=De+la+Cruz+8+Madrid" target="_blank">📍 Mapa</a></div>
+    </div>
+    <div class="hotel-card" onclick="window.open('https://maps.google.com/?q=Rua+Arco+Marques+Alegrete+13+Lisboa','_blank')">
+      <span class="hotel-flag">🇵🇹</span>
+      <div><div class="hotel-city">Lisboa</div><div class="hotel-name">Pensão Nova Goa · Booking</div><div class="hotel-address">Rua Arco Marquês do Alegrete 13 · 18–20 mayo</div></div>
+      <div class="hotel-right"><div class="hotel-checkin">Check-in 14:00</div><div class="hotel-price">€166</div><a class="map-btn" href="https://maps.google.com/?q=Rua+Arco+Marques+Alegrete+13+Lisboa" target="_blank">📍 Mapa</a></div>
+    </div>
+    <div class="hotel-card" onclick="window.open('https://maps.google.com/?q=25+Rua+de+Sampaio+Bruno+Porto','_blank')">
+      <span class="hotel-flag">🇵🇹</span>
+      <div><div class="hotel-city">Oporto</div><div class="hotel-name">Travel & Live Aliados Apartment · Booking</div><div class="hotel-address">25 Rua de Sampaio Bruno · 20–23 mayo</div></div>
+      <div class="hotel-right"><div class="hotel-checkin">Check-in 23:30 ⚠️</div><div class="hotel-price">€263</div><a class="map-btn" href="https://maps.google.com/?q=25+Rua+de+Sampaio+Bruno+Porto" target="_blank">📍 Mapa</a></div>
+    </div>
+    <div class="hotel-card" onclick="window.open('https://maps.google.com/?q=90+Avenue+Victor+Hugo+Paris','_blank')">
+      <span class="hotel-flag">🇫🇷</span>
+      <div><div class="hotel-city">París</div><div class="hotel-name">Airbnb Nicolai</div><div class="hotel-address">90 Avenue Victor Hugo, 75016 · 23–25 mayo</div></div>
+      <div class="hotel-right"><div class="hotel-checkin">13:00 · frente al Starbucks</div><div class="hotel-price">€327</div><a class="map-btn" href="https://maps.google.com/?q=90+Avenue+Victor+Hugo+Paris" target="_blank">📍 Mapa</a></div>
+    </div>
+    <div class="hotel-card" onclick="window.open('https://maps.google.com/?q=Via+Modena+32+Roma','_blank')">
+      <span class="hotel-flag">🇮🇹</span>
+      <div><div class="hotel-city">Roma</div><div class="hotel-name">B&B Lidia · Airbnb</div><div class="hotel-address">Via Modena 32 · 25–29 mayo</div></div>
+      <div class="hotel-right"><div class="hotel-checkin">Check-in 15:00</div><div class="hotel-price">€574</div><a class="map-btn" href="https://maps.google.com/?q=Via+Modena+32+Roma" target="_blank">📍 Mapa</a></div>
+    </div>
+    <div class="hotel-card" onclick="window.open('https://maps.google.com/?q=Via+della+Stufa+5+Firenze','_blank')">
+      <span class="hotel-flag">🇮🇹</span>
+      <div><div class="hotel-city">Florencia</div><div class="hotel-name">B&B Bretz y Nadja · Airbnb</div><div class="hotel-address">Via della Stufa 5 · 29–31 mayo</div></div>
+      <div class="hotel-right"><div class="hotel-checkin">—</div><div class="hotel-price">—</div><a class="map-btn" href="https://maps.google.com/?q=Via+della+Stufa+5+Firenze" target="_blank">📍 Mapa</a></div>
+    </div>
+    <div class="hotel-card" onclick="window.open('https://maps.google.com/?q=Via+Cavalieri+di+Vittorio+Veneto+21+Venezia','_blank')">
+      <span class="hotel-flag">🇮🇹</span>
+      <div><div class="hotel-city">Venecia</div><div class="hotel-name">Mina House Venice · Airbnb</div><div class="hotel-address">Via Cavalieri di Vittorio Veneto 21 · 31 may–2 jun</div></div>
+      <div class="hotel-right"><div class="hotel-checkin">—</div><div class="hotel-price">—</div><a class="map-btn" href="https://maps.google.com/?q=Via+Cavalieri+di+Vittorio+Veneto+21+Venezia" target="_blank">📍 Mapa</a></div>
+    </div>
+    <div class="hotel-card" onclick="window.open('https://maps.google.com/?q=Avenida+Sarria+9+Barcelona','_blank')">
+      <span class="hotel-flag">🇪🇸</span>
+      <div><div class="hotel-city">Barcelona</div><div class="hotel-name">Sunotel Junior · Booking</div><div class="hotel-address">Avenida Sarrià 9, Eixample · 2–6 junio</div></div>
+      <div class="hotel-right"><div class="hotel-checkin">—</div><div class="hotel-price">—</div><a class="map-btn" href="https://maps.google.com/?q=Avenida+Sarria+9+Barcelona" target="_blank">📍 Mapa</a></div>
+    </div>
+    <div class="hotel-card">
+      <span class="hotel-flag">🇪🇸</span>
+      <div><div class="hotel-city">Madrid</div><div class="hotel-name">La India – Casa Madrid · Airbnb</div><div class="hotel-address">Dirección pendiente · 6–8 junio</div></div>
+      <div class="hotel-right"><div class="hotel-checkin">—</div><div class="hotel-price">—</div><span style="font-size:0.6rem;color:var(--yellow)">⚠ Pendiente</span></div>
+    </div>
+  </div>
+  <div style="margin-top:1rem;padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:0.7rem;color:var(--muted)">
+    💡 <strong style="color:var(--text)">Total confirmado:</strong> €1.422 · Toca cualquier hotel para ver en Google Maps
+  </div>
+</section>
+</div>
+
+<!-- ════ PRESUPUESTO ════ -->
+<div id="tab-presupuesto" class="tab-panel">
+<section>
+  <p class="section-label">03 — Finanzas</p>
+  <h2 class="section-heading">Presupuesto</h2>
+  <div style="margin-bottom:1rem;font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted)">— Transporte —</div>
+  <div class="budget-grid">
+    <div class="budget-card"><div class="budget-route">MVD ↔ MAD</div><div class="budget-amount">$900 <small>pp</small></div><div class="budget-op">LATAM · Escala São Paulo</div></div>
+    <div class="budget-card"><div class="budget-route">MAD → LIS</div><div class="budget-amount">$50 <small>pp</small></div><div class="budget-op">Air Europa</div></div>
+    <div class="budget-card"><div class="budget-route">LIS → OPO</div><div class="budget-amount">$30 <small>pp</small></div><div class="budget-op">Tren / Bus ⚠</div></div>
+    <div class="budget-card"><div class="budget-route">OPO → CDG</div><div class="budget-amount">$95 <small>pp</small></div><div class="budget-op">Transavia</div></div>
+    <div class="budget-card"><div class="budget-route">CDG → FCO</div><div class="budget-amount">$132 <small>pp</small></div><div class="budget-op">Transavia · Con valija</div></div>
+    <div class="budget-card"><div class="budget-route">ROM → FLR</div><div class="budget-amount">$9 <small>pp</small></div><div class="budget-op">FlixBus ⚠</div></div>
+    <div class="budget-card"><div class="budget-route">FLR → VCE</div><div class="budget-amount">$34 <small>pp</small></div><div class="budget-op">Trenitalia ⚠</div></div>
+    <div class="budget-card"><div class="budget-route">VCE → BCN</div><div class="budget-amount">$90 <small>pp</small></div><div class="budget-op">Vueling</div></div>
+  </div>
+  <div class="budget-total-bar">
+    <div><div class="total-label">Total transporte</div><div class="total-amount">$1.340</div><div class="total-sub">por persona</div></div>
+    <div style="text-align:right"><div class="total-label" style="margin-bottom:0.4rem">Alojamiento confirmado</div><div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:#5b8dee">€1.422</div><div class="total-sub">Madrid+Lisboa+Oporto+París+Roma</div></div>
+  </div>
+  <div style="margin-top:1.5rem;">
+    <div style="margin-bottom:0.75rem;font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted)">— Tramos pendientes —</div>
+    <div class="pending-list">
+      <div class="pending-item"><span class="pending-item-route">🚂 Lisboa → Oporto</span><span class="pending-item-price">~$30 pp</span></div>
+      <div class="pending-item"><span class="pending-item-route">🚌 Roma → Florencia</span><span class="pending-item-price">~$9 pp</span></div>
+      <div class="pending-item"><span class="pending-item-route">🚂 Florencia → Venecia</span><span class="pending-item-price">~$34 pp</span></div>
+      <div class="pending-item"><span class="pending-item-route">🚂 Barcelona → Madrid</span><span class="pending-item-price">Por confirmar</span></div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ════ HERRAMIENTAS ════ -->
+<div id="tab-herramientas" class="tab-panel">
+<section>
+  <p class="section-label">04 — Herramientas</p>
+  <h2 class="section-heading">Para el Viaje</h2>
+
+  <!-- WAZE MAP -->
+  <div class="tool-card full-width" style="margin-bottom:1rem;">
+    <div class="tool-title">🗺️ Mapa Inteligente</div>
+    <div class="waze-container">
+      <div>
+        <div style="font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Ciudad</div>
+        <div class="waze-city-row" id="waze-cities">
+          <button class="waze-city-btn active" onclick="wazeSetCity('madrid',40.4168,-3.7038,this)">Madrid</button>
+          <button class="waze-city-btn" onclick="wazeSetCity('lisboa',38.7169,-9.1399,this)">Lisboa</button>
+          <button class="waze-city-btn" onclick="wazeSetCity('oporto',41.1579,-8.6291,this)">Oporto</button>
+          <button class="waze-city-btn" onclick="wazeSetCity('paris',48.8566,2.3522,this)">París</button>
+          <button class="waze-city-btn" onclick="wazeSetCity('roma',41.9028,12.4964,this)">Roma</button>
+          <button class="waze-city-btn" onclick="wazeSetCity('florencia',43.7696,11.2558,this)">Florencia</button>
+          <button class="waze-city-btn" onclick="wazeSetCity('venecia',45.4408,12.3155,this)">Venecia</button>
+          <button class="waze-city-btn" onclick="wazeSetCity('barcelona',41.3851,2.1734,this)">Barcelona</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Categoría</div>
+        <div class="waze-cats">
+          <button class="waze-cat-btn active" onclick="wazeToggleCat('supermarket',this)"><span class="cat-icon">🛒</span>Supermercado</button>
+          <button class="waze-cat-btn" onclick="wazeToggleCat('pharmacy',this)"><span class="cat-icon">💊</span>Farmacia</button>
+          <button class="waze-cat-btn" onclick="wazeToggleCat('mall',this)"><span class="cat-icon">🛍️</span>Shopping</button>
+          <button class="waze-cat-btn" onclick="wazeToggleCat('toilets',this)"><span class="cat-icon">🚻</span>Baños</button>
+          <button class="waze-cat-btn" onclick="wazeToggleCat('police',this)"><span class="cat-icon">👮</span>Policía</button>
+          <button class="waze-cat-btn" onclick="wazeToggleCat('hospital',this)"><span class="cat-icon">🏥</span>Hospital</button>
+        </div>
+      </div>
+      <div id="waze-map"></div>
+      <div class="waze-status" id="waze-status">Cargando mapa...</div>
+    </div>
+  </div>
+
+  <div class="tools-grid">
+    <!-- CURRENCY -->
+    <div class="tool-card">
+      <div class="tool-title">💱 Calculadora</div>
+      <div class="calc-input-row">
+        <input class="calc-input" id="calc-amount" type="number" inputmode="decimal" placeholder="100" value="100" oninput="convertCurrency()">
+        <select class="calc-select" id="calc-from" onchange="convertCurrency()">
+          <option value="EUR" selected>EUR</option>
+          <option value="USD">USD</option>
+          <option value="UYU">UYU</option>
+          <option value="GBP">GBP</option>
+        </select>
+        <span style="color:var(--muted)">→</span>
+        <select class="calc-select" id="calc-to" onchange="convertCurrency()">
+          <option value="USD" selected>USD</option>
+          <option value="EUR">EUR</option>
+          <option value="UYU">UYU</option>
+          <option value="GBP">GBP</option>
+        </select>
+      </div>
+      <div class="calc-result"><span id="calc-output">—</span><span id="calc-rate" style="font-size:0.58rem;color:var(--muted);margin-left:auto"></span></div>
+      <div style="font-size:0.52rem;color:var(--muted);margin-top:0.4rem">Tasas aproximadas · Verificar antes de usar</div>
+    </div>
+
+    <!-- WEATHER -->
+    <div class="tool-card">
+      <div class="tool-title">🌤 Clima</div>
+      <select class="calc-select" id="weather-city" onchange="showWeather()" style="width:100%;margin-bottom:0.65rem;">
+        <option value="madrid">Madrid</option>
+        <option value="lisboa">Lisboa</option>
+        <option value="oporto">Oporto</option>
+        <option value="paris">París</option>
+        <option value="roma">Roma</option>
+        <option value="florencia">Florencia</option>
+        <option value="venecia">Venecia</option>
+        <option value="barcelona">Barcelona</option>
+      </select>
+      <div class="weather-display">
+        <div><div class="weather-temp" id="w-temp">22°C</div><div class="weather-desc" id="w-desc">Soleado</div></div>
+        <div class="weather-icon" id="w-icon">☀️</div>
+      </div>
+      <div class="weather-details">
+        <div class="weather-detail">Máx <span id="w-max">28°C</span></div>
+        <div class="weather-detail">Mín <span id="w-min">13°C</span></div>
+        <div class="weather-detail">Lluvia <span id="w-rain">10%</span></div>
+        <div class="weather-detail">Humedad <span id="w-hum">45%</span></div>
+      </div>
+    </div>
+
+    <!-- CHECKLIST -->
+    <div class="tool-card">
+      <div class="tool-title">🧳 Checklist</div>
+      <div class="checklist-items" id="checklist"></div>
+      <div style="margin-top:0.6rem;font-size:0.58rem;color:var(--muted)" id="check-progress"></div>
+    </div>
+
+    <!-- PENDIENTES -->
+    <div class="tool-card">
+      <div class="tool-title">⚠️ Pendientes</div>
+      <div class="pending-list">
+        <div class="pending-item" style="border-left-color:var(--red)"><span>Comprar LIS → OPO</span><span style="color:var(--red);font-size:0.65rem">Urgente</span></div>
+        <div class="pending-item" style="border-left-color:var(--red)"><span>Comprar ROM → FLR</span><span style="color:var(--red);font-size:0.65rem">Urgente</span></div>
+        <div class="pending-item" style="border-left-color:var(--red)"><span>Comprar FLR → VCE</span><span style="color:var(--red);font-size:0.65rem">Urgente</span></div>
+        <div class="pending-item"><span>Comprar BCN → MAD</span><span style="color:var(--yellow);font-size:0.65rem">Tren</span></div>
+        <div class="pending-item"><span>Pagar resto París</span><span style="color:var(--yellow);font-size:0.65rem">Mayo</span></div>
+        <div class="pending-item"><span>Pagar resto Roma</span><span style="color:var(--yellow);font-size:0.65rem">12/05</span></div>
+        <div class="pending-item"><span>Dirección Madrid cierre</span><span style="color:var(--yellow);font-size:0.65rem">La India</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<footer>Europa 2026 · 16 Mayo → 9 Junio · ¡Buen viaje! ✈</footer>
+
+<script>
+// ── PWA SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+// ── TABS ──
+function showTab(name, el) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+  if (name === 'herramientas' && !wazeMap) initWazeMap();
+  window.scrollTo(0, 0);
+}
+
+// ── TIMELINE ──
+function toggleDetail(city) {
+  const detail = document.getElementById('detail-' + city);
+  const card = detail.closest('.timeline-card');
+  const isOpen = detail.classList.contains('open');
+  detail.classList.toggle('open', !isOpen);
+  card.classList.toggle('expanded', !isOpen);
+}
+
+function jumpToCity(city) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-timeline').classList.add('active');
+  document.querySelector('.nav-tab').classList.add('active');
+  setTimeout(() => {
+    const el = document.getElementById('tl-' + city);
+    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  }, 100);
+}
+
+// Scroll reveal
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.timeline-item').forEach(el => observer.observe(el));
+
+// ── CURRENCY ──
+const rates = { USD:1, EUR:1.08, UYU:0.025, GBP:1.27 };
+const symbols = { USD:'$', EUR:'€', UYU:'$U', GBP:'£' };
+function convertCurrency() {
+  const amount = parseFloat(document.getElementById('calc-amount').value) || 0;
+  const from = document.getElementById('calc-from').value;
+  const to = document.getElementById('calc-to').value;
+  const result = amount * (rates[to] / rates[from]);
+  document.getElementById('calc-output').textContent = `${symbols[to]}${result.toFixed(2)}`;
+  document.getElementById('calc-rate').textContent = `1 ${from} = ${(rates[to]/rates[from]).toFixed(4)} ${to}`;
+}
+convertCurrency();
+
+// ── WEATHER ──
+const weatherData = {
+  madrid:    { temp:22, max:28, min:13, icon:'☀️', desc:'Soleado y cálido', rain:'10%', hum:'45%' },
+  lisboa:    { temp:20, max:25, min:14, icon:'⛅', desc:'Parcialmente nublado', rain:'25%', hum:'65%' },
+  oporto:    { temp:18, max:23, min:12, icon:'🌦', desc:'Algo de lluvia', rain:'35%', hum:'70%' },
+  paris:     { temp:17, max:22, min:11, icon:'⛅', desc:'Variable, lleva abrigo', rain:'40%', hum:'68%' },
+  roma:      { temp:24, max:29, min:15, icon:'☀️', desc:'Caluroso y soleado', rain:'15%', hum:'55%' },
+  florencia: { temp:23, max:28, min:14, icon:'☀️', desc:'Cálido, ideal para caminar', rain:'12%', hum:'52%' },
+  venecia:   { temp:22, max:27, min:14, icon:'⛅', desc:'Agradable, puede llover', rain:'28%', hum:'68%' },
+  barcelona: { temp:23, max:27, min:16, icon:'☀️', desc:'Mediterráneo perfecto', rain:'15%', hum:'60%' },
+};
+function showWeather() {
+  const d = weatherData[document.getElementById('weather-city').value];
+  document.getElementById('w-temp').textContent = d.temp + '°C';
+  document.getElementById('w-desc').textContent = d.desc;
+  document.getElementById('w-icon').textContent = d.icon;
+  document.getElementById('w-max').textContent = d.max + '°C';
+  document.getElementById('w-min').textContent = d.min + '°C';
+  document.getElementById('w-rain').textContent = d.rain;
+  document.getElementById('w-hum').textContent = d.hum;
+}
+showWeather();
+
+// ── CHECKLIST ──
+const packingItems = [
+  'Pasaporte vigente ✈️','Seguro de viaje','Adaptador EU','Power bank','Audífonos',
+  'Ropa interior (7 días)','Remeras (5)','Pantalón para caminar','Campera ligera',
+  'Zapatillas cómodas','Sandalias','Artículos de higiene','Medicamentos básicos',
+  'Tarjeta de débito int.','Efectivo en euros (~€200)','Reservas offline',
+  'Candado para equipaje','Botella reutilizable','Mochila de día',
+];
+function renderChecklist() {
+  const container = document.getElementById('checklist');
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('packing') || '{}'); } catch(e) {}
+  container.innerHTML = '';
+  let done = 0;
+  packingItems.forEach((item, i) => {
+    if (saved[i]) done++;
+    const div = document.createElement('div');
+    div.className = 'check-item' + (saved[i] ? ' done' : '');
+    div.innerHTML = `<input type="checkbox" ${saved[i]?'checked':''} onchange="toggleCheck(${i},this)"> ${item}`;
+    container.appendChild(div);
+  });
+  document.getElementById('check-progress').textContent = `${done}/${packingItems.length} listos`;
+}
+function toggleCheck(i, el) {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('packing') || '{}'); } catch(e) {}
+  saved[i] = el.checked;
+  try { localStorage.setItem('packing', JSON.stringify(saved)); } catch(e) {}
+  el.closest('.check-item').classList.toggle('done', el.checked);
+  const done = Object.values(saved).filter(Boolean).length;
+  document.getElementById('check-progress').textContent = `${done}/${packingItems.length} listos`;
+}
+renderChecklist();
+
+// ══════════════════════════════════
+// WAZE-STYLE MAP
+// ══════════════════════════════════
+let wazeMap = null;
+let wazeCity = { name:'madrid', lat:40.4168, lng:-3.7038 };
+let wazeActiveCat = 'supermarket';
+let wazeMarkers = [];
+let wazeLoading = false;
+
+const catConfig = {
+  supermarket: { icon:'🛒', color:'#34d399', osm:'shop=supermarket', label:'Supermercado' },
+  pharmacy:    { icon:'💊', color:'#f87171', osm:'amenity=pharmacy',  label:'Farmacia' },
+  mall:        { icon:'🛍️', color:'#a78bfa', osm:'shop=mall',         label:'Shopping' },
+  toilets:     { icon:'🚻', color:'#60a5fa', osm:'amenity=toilets',   label:'Baños públicos' },
+  police:      { icon:'👮', color:'#fbbf24', osm:'amenity=police',    label:'Policía' },
+  hospital:    { icon:'🏥', color:'#fb923c', osm:'amenity=hospital',  label:'Hospital' },
+};
+
+function initWazeMap() {
+  if (wazeMap) return;
+  wazeMap = L.map('waze-map', {
+    center: [wazeCity.lat, wazeCity.lng],
+    zoom: 14,
+    zoomControl: true,
+    attributionControl: true,
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19,
+  }).addTo(wazeMap);
+
+  document.getElementById('waze-status').textContent = '';
+  loadWazePOIs();
+}
+
+function wazeSetCity(name, lat, lng, btn) {
+  wazeCity = { name, lat, lng };
+  document.querySelectorAll('.waze-city-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (!wazeMap) { initWazeMap(); return; }
+  wazeMap.setView([lat, lng], 14);
+  loadWazePOIs();
+}
+
+function wazeToggleCat(cat, btn) {
+  wazeActiveCat = cat;
+  document.querySelectorAll('.waze-cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (!wazeMap) { initWazeMap(); return; }
+  loadWazePOIs();
+}
+
+function clearWazeMarkers() {
+  wazeMarkers.forEach(m => wazeMap.removeLayer(m));
+  wazeMarkers = [];
+}
+
+async function loadWazePOIs() {
+  if (!wazeMap || wazeLoading) return;
+  wazeLoading = true;
+  clearWazeMarkers();
+  const status = document.getElementById('waze-status');
+  const cfg = catConfig[wazeActiveCat];
+  status.textContent = `Buscando ${cfg.label.toLowerCase()}s cerca de ${wazeCity.name}...`;
+
+  const [key, val] = cfg.osm.split('=');
+  const r = 1500; // 1.5km radius
+  const query = `
+    [out:json][timeout:15];
+    node["${key}"="${val}"](around:${r},${wazeCity.lat},${wazeCity.lng});
+    out body 30;
+  `;
+
+  try {
+    const resp = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: 'data=' + encodeURIComponent(query),
+    });
+    const data = await resp.json();
+    const elements = data.elements || [];
+
+    if (elements.length === 0) {
+      status.textContent = `No se encontraron ${cfg.label.toLowerCase()}s cerca. Intenta acercar el mapa.`;
+      wazeLoading = false;
+      return;
+    }
+
+    elements.forEach(el => {
+      if (!el.lat || !el.lon) return;
+      const name = el.tags?.name || cfg.label;
+      const addr = el.tags?.['addr:street'] ? `${el.tags['addr:street']} ${el.tags['addr:housenumber'] || ''}`.trim() : '';
+
+      const icon = L.divIcon({
+        html: `<div style="
+          width:34px;height:34px;border-radius:50%;
+          background:${cfg.color};
+          display:flex;align-items:center;justify-content:center;
+          font-size:16px;
+          box-shadow:0 2px 8px rgba(0,0,0,0.5);
+          border:2px solid rgba(255,255,255,0.8);
+          cursor:pointer;
+        ">${cfg.icon}</div>`,
+        className: '',
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
+      });
+
+      const marker = L.marker([el.lat, el.lon], { icon })
+        .bindPopup(`
+          <div style="min-width:160px">
+            <strong style="font-size:0.82rem">${cfg.icon} ${name}</strong><br>
+            ${addr ? `<span style="color:#9ca3af;font-size:0.65rem">${addr}</span><br>` : ''}
+            <a href="https://maps.google.com/?q=${el.lat},${el.lon}" target="_blank"
+               style="color:#5b8dee;font-size:0.65rem;text-decoration:none;display:inline-block;margin-top:4px">
+               📍 Abrir en Google Maps →
+            </a>
+          </div>
+        `, { maxWidth: 220 })
+        .addTo(wazeMap);
+      wazeMarkers.push(marker);
+    });
+
+    status.textContent = `${elements.length} ${cfg.label.toLowerCase()}${elements.length !== 1 ? 's' : ''} encontrado${elements.length !== 1 ? 's' : ''} · Tocá un marcador para más info`;
+  } catch(e) {
+    status.textContent = 'Error al cargar. Verificá tu conexión a internet.';
+  }
+  wazeLoading = false;
+}
+</script>
+</body>
+</html>
